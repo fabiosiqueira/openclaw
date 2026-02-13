@@ -9,7 +9,7 @@ echo "[$(date)] Cleaning up stale locks..."
 
 # Update code if needed
 echo "[$(date)] Checking for code updates..."
-/app/scripts/update-checker.sh
+# /app/scripts/update-checker.sh  # Temporarily disabled
 
 # Generate config
 echo "[$(date)] Generating configuration..."

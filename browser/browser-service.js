@@ -2,8 +2,9 @@
 // Browser Service for headless web access
 // Provides API for OpenClaw to perform web searches and extractions
 
-const express = require('express');
-const puppeteer = require('puppeteer-core');
+import express from 'express';
+import puppeteer from 'puppeteer-core';
+
 const app = express();
 const PORT = process.env.BROWSER_PORT || 9223;
 

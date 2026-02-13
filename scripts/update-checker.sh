@@ -29,7 +29,9 @@ if [ "$LOCAL" != "$REMOTE" ]; then
     git pull origin main
     npm ci
     npm run build
-    echo "OpenClaw updated to $(git rev-parse HEAD)"
+    # Restore our custom files after update
+    cp -r /tmp/custom-files/* /app/ 2>/dev/null || true
+    echo "Custom files restored"
 else
     echo "Already up to date"
 fi

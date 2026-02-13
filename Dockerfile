@@ -50,6 +50,7 @@ RUN apk add --no-cache \
 # Copy built application and production dependencies
 COPY --from=base /app/node_modules /app/node_modules
 COPY --from=base /app/package.json /app/package.json
+COPY --from=base /app/dist /app/dist
 
 # Copy our custom scripts and configs
 COPY scripts/ /app/scripts/

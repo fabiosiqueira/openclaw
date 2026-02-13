@@ -9,9 +9,12 @@ RUN apk add --no-cache \
     && mkdir -p /app /data /config /backups
 
 # Clone OpenClaw (will be updated at runtime)
-RUN git clone --depth 1 https://github.com/coollabsio/openclaw.git /app
+RUN git clone --depth 1 https://github.com/openclaw/openclaw.git /app
 
 WORKDIR /app
+
+# Copy our package.json (since official repo may not have it)
+COPY package.json /app/
 
 # Install dependencies
 RUN npm install

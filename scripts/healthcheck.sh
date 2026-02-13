@@ -2,11 +2,18 @@
 # Deep health check for OpenClaw
 
 HEALTH_URL="http://localhost:18789/health"
+BROWSER_URL="http://localhost:9223/health"
 TIMEOUT=10
 
 # Check if gateway is responding
 if ! curl -f -s --max-time $TIMEOUT "$HEALTH_URL" > /dev/null; then
     echo "Gateway health check failed"
+    exit 1
+fi
+
+# Check if browser service is responding
+if ! curl -f -s --max-time $TIMEOUT "$BROWSER_URL" > /dev/null; then
+    echo "Browser service health check failed"
     exit 1
 fi
 

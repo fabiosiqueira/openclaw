@@ -6,8 +6,6 @@ RUN apk add --no-cache \
     bash \
     curl \
     jq \
-    nginx \
-    supervisor \
     && mkdir -p /app /data /config /backups
 
 # Clone OpenClaw (will be updated at runtime)
@@ -24,7 +22,7 @@ RUN npm run build
 # Runtime stage
 FROM node:22-alpine AS runtime
 
-# Install runtime dependencies
+# Install runtime dependencies including browser
 RUN apk add --no-cache \
     git \
     bash \
@@ -33,6 +31,14 @@ RUN apk add --no-cache \
     nginx \
     supervisor \
     openssh-client \
+    chromium \
+    chromium-chromedriver \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
     && mkdir -p /app /data /config /backups /logs
 
 # Copy built application
@@ -56,6 +62,10 @@ RUN addgroup -g 1001 -S openclaw && \
 
 # Set permissions
 RUN chown -R openclaw:openclaw /app /data /config /backups /logs
+
+# Set environment for headless browser
+ENV CHROME_BIN=/usr/bin/chromium-browser
+ENV CHROME_PATH=/usr/lib/chromium/
 
 USER openclaw
 

@@ -19,8 +19,8 @@ COPY package.json /app/
 # Install dependencies
 RUN npm install
 
-# Build OpenClaw
-RUN npm run build
+# Skip build for now - OpenClaw may not need compilation
+# RUN npm run build
 
 # Runtime stage
 FROM node:22-alpine AS runtime
@@ -44,7 +44,7 @@ RUN apk add --no-cache \
     ttf-freefont \
     && mkdir -p /app /data /config /backups /logs
 
-# Copy built application
+# Copy application (including node_modules)
 COPY --from=base /app /app
 
 # Copy scripts

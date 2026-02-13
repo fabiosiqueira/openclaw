@@ -1,28 +1,34 @@
-FROM node:18-alpine AS base
+FROM node:22-alpine AS base
 
-# Install dependencies
+# Install build dependencies
 RUN apk add --no-cache \
     git \
     bash \
     curl \
     jq \
+    python3 \
+    make \
+    g++ \
     && mkdir -p /app /data /config /backups
 
-# Clone OpenClaw (will be updated at runtime)
+# Clone OpenClaw official repo
 RUN git clone --depth 1 https://github.com/openclaw/openclaw.git /app
 
 WORKDIR /app
 
-# Copy our minimal package.json
+# Copy our enhanced package.json with full dependencies
 COPY package.json /app/
 
-# Install minimal dependencies
-RUN npm install --production
+# Install all dependencies including dev dependencies for build
+RUN npm install
 
-# Runtime stage
-FROM node:18-alpine AS runtime
+# Build the application
+RUN npm run build
 
-# Install runtime dependencies including browser (lighter)
+# Production stage - clean and optimized
+FROM node:22-alpine AS runtime
+
+# Install runtime dependencies for full browser support
 RUN apk add --no-cache \
     git \
     bash \
@@ -33,38 +39,54 @@ RUN apk add --no-cache \
     openssh-client \
     chromium \
     chromium-chromedriver \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
     && mkdir -p /app /data /config /backups /logs
 
-# Copy application (including node_modules)
-COPY --from=base /app /app
+# Copy built application and production dependencies
+COPY --from=base /app/node_modules /app/node_modules
+COPY --from=base /app/package.json /app/package.json
+COPY --from=base /app/dist /app/dist 2>/dev/null || true
+COPY --from=base /app/*.js /app/ 2>/dev/null || true
+COPY --from=base /app/*.json /app/ 2>/dev/null || true
 
-# Copy scripts
+# Copy our custom scripts and configs
 COPY scripts/ /app/scripts/
+COPY browser/ /app/browser/ 2>/dev/null || true
 
 # Make scripts executable
 RUN chmod +x /app/scripts/*.sh
 
-# Setup nginx
+# Setup nginx with optimized config
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Setup supervisor
 COPY supervisord.conf /etc/supervisord.conf
 
-# Create non-root user
+# Create optimized non-root user
 RUN addgroup -g 1001 -S openclaw && \
-    adduser -u 1001 -S openclaw -G openclaw
+    adduser -u 1001 -S openclaw -G openclaw && \
+    chown -R openclaw:openclaw /app /data /config /backups /logs
 
-# Set permissions
-RUN chown -R openclaw:openclaw /app /data /config /backups /logs
+# Clean up APK cache to reduce image size
+RUN rm -rf /var/cache/apk/*
 
 # Set environment for headless browser
-ENV CHROME_BIN=/usr/bin/chromium-browser
-ENV CHROME_PATH=/usr/lib/chromium/
+ENV CHROME_BIN=/usr/bin/chromium-browser \
+    CHROME_PATH=/usr/lib/chromium/ \
+    NODE_ENV=production \
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 USER openclaw
 
 EXPOSE 8080
 
+# Health check with optimized timing
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD /app/scripts/healthcheck.sh
 

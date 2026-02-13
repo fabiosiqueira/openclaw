@@ -1,8 +1,20 @@
 // OpenClaw Configuration Generator
-// This would be expanded based on OpenClaw's actual config needs
+// Reads API keys from persistent volume files or environment variables
 
 const fs = require('fs');
 const path = require('path');
+
+function readKeyFile(filename) {
+    const filepath = path.join('/config', filename);
+    try {
+        if (fs.existsSync(filepath)) {
+            return fs.readFileSync(filepath, 'utf8').trim();
+        }
+    } catch (error) {
+        console.warn(`Warning: Could not read ${filename}:`, error.message);
+    }
+    return null;
+}
 
 function generateConfig() {
     const config = {
@@ -15,15 +27,23 @@ function generateConfig() {
         configDir: '/config',
         logsDir: '/logs',
 
-        // Provider configs (would be set via env)
+        // API Keys - Read from files first, then env vars
+        apiKeys: {
+            openai: readKeyFile('openai.key') || process.env.OPENAI_API_KEY || '',
+            anthropic: readKeyFile('anthropic.key') || process.env.ANTHROPIC_API_KEY || '',
+            github: readKeyFile('github.key') || process.env.GITHUB_TOKEN || '',
+            gitlab: readKeyFile('gitlab.key') || process.env.GITLAB_TOKEN || ''
+        },
+
+        // Provider configs
         providers: {
             openai: {
-                apiKey: process.env.OPENAI_API_KEY || '',
-                enabled: !!process.env.OPENAI_API_KEY
+                apiKey: readKeyFile('openai.key') || process.env.OPENAI_API_KEY || '',
+                enabled: !!(readKeyFile('openai.key') || process.env.OPENAI_API_KEY)
             },
             anthropic: {
-                apiKey: process.env.ANTHROPIC_API_KEY || '',
-                enabled: !!process.env.ANTHROPIC_API_KEY
+                apiKey: readKeyFile('anthropic.key') || process.env.ANTHROPIC_API_KEY || '',
+                enabled: !!(readKeyFile('anthropic.key') || process.env.ANTHROPIC_API_KEY)
             }
         },
 
@@ -31,7 +51,15 @@ function generateConfig() {
         features: {
             browserSidecar: process.env.BROWSER_SIDECAR !== 'false',
             webhooks: process.env.WEBHOOKS !== 'false',
-            persistentSessions: true
+            persistentSessions: true,
+            autoBackup: true,
+            healthChecks: true
+        },
+
+        // Browser service
+        browser: {
+            port: process.env.BROWSER_PORT || 9223,
+            enabled: true
         }
     };
 
@@ -41,5 +69,8 @@ function generateConfig() {
 // Generate and save config
 const config = generateConfig();
 console.log(JSON.stringify(config, null, 2));
+
+// Save to file for debugging
+fs.writeFileSync('/config/config.json', JSON.stringify(config, null, 2));
 
 // This would be called by entrypoint.sh

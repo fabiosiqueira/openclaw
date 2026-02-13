@@ -1,4 +1,4 @@
-FROM node:22-alpine AS base
+FROM node:18-alpine AS base
 
 # Install dependencies
 RUN apk add --no-cache \
@@ -13,19 +13,16 @@ RUN git clone --depth 1 https://github.com/openclaw/openclaw.git /app
 
 WORKDIR /app
 
-# Copy our package.json (since official repo may not have it)
+# Copy our minimal package.json
 COPY package.json /app/
 
-# Install dependencies
-RUN npm install
-
-# Skip build for now - OpenClaw may not need compilation
-# RUN npm run build
+# Install minimal dependencies
+RUN npm install --production
 
 # Runtime stage
-FROM node:22-alpine AS runtime
+FROM node:18-alpine AS runtime
 
-# Install runtime dependencies including browser
+# Install runtime dependencies including browser (lighter)
 RUN apk add --no-cache \
     git \
     bash \
@@ -36,12 +33,6 @@ RUN apk add --no-cache \
     openssh-client \
     chromium \
     chromium-chromedriver \
-    nss \
-    freetype \
-    freetype-dev \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
     && mkdir -p /app /data /config /backups /logs
 
 # Copy application (including node_modules)

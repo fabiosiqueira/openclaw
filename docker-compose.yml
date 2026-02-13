@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  openclaw:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: openclaw-improved
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - openclaw_data:/data
+      - openclaw_config:/config
+      - openclaw_logs:/logs
+      - openclaw_backups:/backups
+    environment:
+      - NODE_ENV=production
+      - BROWSER_PORT=9223
+      - PORT=18789
+      - HOST=0.0.0.0
+    healthcheck:
+      test: ["CMD", "/app/scripts/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - openclaw-network
+
+volumes:
+  openclaw_data:
+    driver: local
+  openclaw_config:
+    driver: local
+  openclaw_logs:
+    driver: local
+  openclaw_backups:
+    driver: local
+
+networks:
+  openclaw-network:
+    driver: bridge

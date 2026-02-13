@@ -14,7 +14,7 @@ RUN git clone --depth 1 https://github.com/coollabsio/openclaw.git /app
 WORKDIR /app
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Build OpenClaw
 RUN npm run build

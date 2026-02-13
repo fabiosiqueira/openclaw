@@ -17,7 +17,7 @@ RUN git clone --depth 1 https://github.com/openclaw/openclaw.git /app
 WORKDIR /app
 
 # Install dependencies
-RUN npm install --production
+RUN npm install --production --ignore-scripts --legacy-peer-deps || npm install --production --force
 
 # Production stage - clean and optimized
 FROM node:22-alpine AS runtime

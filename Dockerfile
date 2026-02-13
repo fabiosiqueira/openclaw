@@ -8,7 +8,9 @@ RUN apk add --no-cache \
     jq \
     python3 \
     make \
+    pnpm \
     g++ \
+RUN npm install -g pnpm
     && mkdir -p /app /data /config /backups
 
 # Clone OpenClaw official repo
@@ -18,6 +20,8 @@ WORKDIR /app
 
 # Install dependencies
 RUN npm install --production --ignore-scripts --legacy-peer-deps || npm install --production --force
+# Build the application
+RUN npm run build
 
 # Production stage - clean and optimized
 FROM node:22-alpine AS runtime

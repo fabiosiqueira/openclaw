@@ -1,8 +1,11 @@
 // OpenClaw Configuration Generator
 // Reads API keys from persistent volume files or environment variables
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function readKeyFile(filename) {
     const filepath = path.join('/config', filename);
@@ -72,5 +75,3 @@ console.log(JSON.stringify(config, null, 2));
 
 // Save to file for debugging
 fs.writeFileSync('/config/config.json', JSON.stringify(config, null, 2));
-
-// This would be called by entrypoint.sh

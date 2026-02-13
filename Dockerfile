@@ -16,14 +16,8 @@ RUN git clone --depth 1 https://github.com/openclaw/openclaw.git /app
 
 WORKDIR /app
 
-# Copy our enhanced package.json with full dependencies
-COPY package.json /app/
-
-# Install all dependencies including dev dependencies for build
-RUN npm install
-
-# Build the application
-RUN npm run build
+# Install dependencies
+RUN npm install --production
 
 # Production stage - clean and optimized
 FROM node:22-alpine AS runtime
@@ -47,23 +41,18 @@ RUN apk add --no-cache \
     ttf-freefont \
     && mkdir -p /app /data /config /backups /logs
 
-# Copy built application and production dependencies
-COPY --from=base /app/node_modules /app/node_modules
-COPY --from=base /app/package.json /app/package.json
-COPY --from=base /app/dist /app/dist
+WORKDIR /app
 
-# Copy our custom scripts and configs
+# Copy entire OpenClaw application from build stage
+COPY --from=base /app /app
+
+# Copy our custom scripts and configs (overwrites if needed)
 COPY scripts/ /app/scripts/
-COPY browser/ /app/browser/
+COPY supervisord.conf /etc/supervisord.conf
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Make scripts executable
 RUN chmod +x /app/scripts/*.sh
-
-# Setup nginx with optimized config
-COPY nginx.conf /etc/nginx/nginx.conf
-
-# Setup supervisor
-COPY supervisord.conf /etc/supervisord.conf
 
 # Create optimized non-root user
 RUN addgroup -g 1001 -S openclaw && \
@@ -86,6 +75,6 @@ EXPOSE 8080
 
 # Health check with optimized timing
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD /app/scripts/healthcheck.sh
+    CMD /app/scripts/healthcheck.sh || exit 1
 
 ENTRYPOINT ["/app/scripts/entrypoint.sh"]
